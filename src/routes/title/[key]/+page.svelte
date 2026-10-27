@@ -129,7 +129,15 @@
 		{#if art}<img class="art" src={art} alt="" />{/if}
 		<div class="shade"></div>
 		<div class="content">
-			{#if poster}<img class="poster" src={poster} alt="" />{/if}
+			{#if poster}
+				<figure class="poster">
+					<img src={poster} alt="" />
+					{#if pct > 0}
+						<div class="poster-progress"><span style:width="{pct * 100}%"></span></div>
+						<figcaption>{duration((item.duration ?? 0) - (item.viewOffset ?? 0))} left</figcaption>
+					{/if}
+				</figure>
+			{/if}
 			<div class="info">
 				{#if item.type === 'episode'}
 					<a class="show-link" href="/title/{item.grandparentRatingKey}">{item.grandparentTitle}</a>
@@ -154,7 +162,8 @@
 				</p>
 
 				{#if pct > 0}
-					<div class="resume">
+					<!-- the poster carries progress on wide screens; this row covers phones / no poster -->
+					<div class="resume" class:has-poster={!!poster}>
 						<div class="progress-track"><div class="progress-fill" style:width="{pct * 100}%"></div></div>
 						<span class="muted">{duration((item.duration ?? 0) - (item.viewOffset ?? 0))} left</span>
 					</div>
@@ -170,57 +179,63 @@
 
 				{#if item.summary}<p class="summary">{item.summary}</p>{/if}
 
-				<dl class:saving={savingTrack}>
+				<div class="facts">
 					{#if part && (item.type === 'movie' || item.type === 'episode')}
-						{#if videoLabel}
-							<dt>Video</dt>
-							<dd>{videoLabel}</dd>
-						{/if}
-						{#if audioTracks.length}
-							<dt>Audio</dt>
-							<dd>
-								{#if audioTracks.length > 1}
+						<dl class="media" class:saving={savingTrack}>
+							{#if videoLabel}
+								<dt>Video</dt>
+								<dd>{videoLabel}</dd>
+							{/if}
+							{#if audioTracks.length}
+								<dt>Audio</dt>
+								<dd>
+									{#if audioTracks.length > 1}
+										<Select
+											variant="inline"
+											label="Audio track"
+											value={String((audioTracks.find((s) => s.selected) ?? audioTracks[0]).id)}
+											options={audioTracks.map((s) => ({ value: String(s.id), label: trackLabel(s) }))}
+											onchange={(v) => pickTrack('audio', v)}
+										/>
+									{:else}
+										{trackLabel(audioTracks[0])}
+									{/if}
+								</dd>
+							{/if}
+							{#if subtitleTracks.length}
+								<dt>Subtitles</dt>
+								<dd>
 									<Select
 										variant="inline"
-										label="Audio track"
-										value={String((audioTracks.find((s) => s.selected) ?? audioTracks[0]).id)}
-										options={audioTracks.map((s) => ({ value: String(s.id), label: trackLabel(s) }))}
-										onchange={(v) => pickTrack('audio', v)}
+										label="Subtitles"
+										value={String(subtitleTracks.find((s) => s.selected)?.id ?? 0)}
+										options={[
+											{ value: '0', label: 'None' },
+											...subtitleTracks.map((s) => ({ value: String(s.id), label: trackLabel(s) }))
+										]}
+										onchange={(v) => pickTrack('subtitle', v)}
 									/>
-								{:else}
-									{trackLabel(audioTracks[0])}
-								{/if}
-							</dd>
-						{/if}
-						{#if subtitleTracks.length}
-							<dt>Subtitles</dt>
-							<dd>
-								<Select
-									variant="inline"
-									label="Subtitles"
-									value={String(subtitleTracks.find((s) => s.selected)?.id ?? 0)}
-									options={[
-										{ value: '0', label: 'None' },
-										...subtitleTracks.map((s) => ({ value: String(s.id), label: trackLabel(s) }))
-									]}
-									onchange={(v) => pickTrack('subtitle', v)}
-								/>
-							</dd>
-						{/if}
+								</dd>
+							{/if}
+						</dl>
 					{/if}
-					{#if item.Genre?.length}
-						<dt>Genres</dt>
-						<dd>{item.Genre.map((g) => g.tag).join(', ')}</dd>
+					{#if item.Genre?.length || item.Director?.length || item.studio}
+						<dl>
+							{#if item.Genre?.length}
+								<dt>Genres</dt>
+								<dd>{item.Genre.map((g) => g.tag).join(', ')}</dd>
+							{/if}
+							{#if item.Director?.length}
+								<dt>Director</dt>
+								<dd>{item.Director.map((d) => d.tag).join(', ')}</dd>
+							{/if}
+							{#if item.studio}
+								<dt>Studio</dt>
+								<dd>{item.studio}</dd>
+							{/if}
+						</dl>
 					{/if}
-					{#if item.Director?.length}
-						<dt>Director</dt>
-						<dd>{item.Director.map((d) => d.tag).join(', ')}</dd>
-					{/if}
-					{#if item.studio}
-						<dt>Studio</dt>
-						<dd>{item.studio}</dd>
-					{/if}
-				</dl>
+				</div>
 			</div>
 		</div>
 	</section>
@@ -312,13 +327,37 @@
 	}
 	.poster {
 		width: clamp(160px, 18vw, 260px);
-		aspect-ratio: 2 / 3;
-		object-fit: cover;
+		margin: 0;
 		border-radius: 10px;
+		overflow: hidden;
+		background: var(--bg-elev);
 		box-shadow:
 			0 0 0 1px var(--border),
 			var(--shadow);
 		flex: none;
+	}
+	.poster img {
+		display: block;
+		width: 100%;
+		aspect-ratio: 2 / 3;
+		object-fit: cover;
+	}
+	/* progress attached flush to the poster's bottom edge */
+	.poster-progress {
+		height: 4px;
+		background: rgb(230 241 255 / 0.15);
+	}
+	.poster-progress span {
+		display: block;
+		height: 100%;
+		background: var(--accent);
+		box-shadow: 0 0 8px var(--accent);
+	}
+	.poster figcaption {
+		padding: 0.6rem;
+		text-align: center;
+		font-size: 0.85rem;
+		color: var(--text-dim);
 	}
 	.info {
 		max-width: 760px;
@@ -381,6 +420,9 @@
 		margin-bottom: 1rem;
 		font-size: 0.85rem;
 	}
+	.resume.has-poster {
+		display: none;
+	}
 	.resume .progress-track {
 		flex: 1;
 	}
@@ -394,15 +436,28 @@
 		line-height: 1.6;
 		margin: 0 0 1rem;
 	}
+	/* Media tracks and credits as two separate groups: side by side when there's room. */
+	.facts {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+		gap: 1.25rem 2.5rem;
+		margin-top: 0.25rem;
+	}
 	dl {
 		display: grid;
-		grid-template-columns: auto minmax(0, 1fr);
-		gap: 0.3rem 1rem;
+		grid-template-columns: 5.5rem minmax(0, 1fr);
+		align-content: start;
+		gap: 0.6rem 1rem;
 		margin: 0;
-		font-size: 0.9rem;
+		font-size: 0.92rem;
 	}
 	dt {
+		align-self: center;
 		color: var(--text-dim);
+		font-size: 0.7rem;
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
 	}
 	dd {
 		margin: 0;
@@ -489,6 +544,9 @@
 		}
 		.poster {
 			display: none;
+		}
+		.resume.has-poster {
+			display: flex;
 		}
 	}
 	@media (max-width: 640px) {

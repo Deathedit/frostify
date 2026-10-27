@@ -31,7 +31,7 @@ export const SORTS = [
 
 export async function getSectionItems(
 	sectionId: string,
-	opts: { start: number; size: number; sort: string; unwatched: boolean }
+	opts: { start: number; size: number; sort: string; unwatched?: boolean }
 ): Promise<{ items: Metadata[]; total: number; title?: string }> {
 	const mc = await pms(`/library/sections/${sectionId}/all`, {
 		query: {

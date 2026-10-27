@@ -14,7 +14,6 @@
 	const section = $derived(libraries.sections.find((s) => s.key === id));
 
 	let sort = $state<string>(SORTS[1].value);
-	let unwatched = $state(false);
 	let items = $state<Metadata[]>([]);
 	let total = $state(0);
 	let loading = $state(false);
@@ -30,8 +29,7 @@
 			const res = await getSectionItems(id, {
 				start: reset ? 0 : items.length,
 				size: PAGE,
-				sort,
-				unwatched
+				sort
 			});
 			if (gen !== generation) return;
 			items = reset ? res.items : [...items, ...res.items];
@@ -46,7 +44,7 @@
 
 	// Reload from scratch whenever the library, sort or filter changes.
 	$effect(() => {
-		void [id, sort, unwatched];
+		void [id, sort];
 		// loadMore reads `loading`/`items`; untracked so finishing a fetch doesn't restart this effect.
 		untrack(() => {
 			items = [];
@@ -75,10 +73,6 @@
 		<h1>{section?.title ?? 'Library'}</h1>
 		<span class="muted count">{total ? `${total} titles` : ''}</span>
 		<div class="filters">
-			<label class="toggle">
-				<input type="checkbox" bind:checked={unwatched} />
-				<span>Unwatched</span>
-			</label>
 			<Select bind:value={sort} label="Sort by" options={SORTS.map((s) => ({ ...s }))} />
 		</div>
 	</header>
@@ -116,19 +110,6 @@
 		display: flex;
 		align-items: center;
 		gap: 1rem;
-	}
-	.toggle {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		cursor: pointer;
-		color: var(--text-dim);
-		font-size: 0.92rem;
-	}
-	.toggle input {
-		accent-color: var(--accent);
-		width: 1rem;
-		height: 1rem;
 	}
 	.grid {
 		--card-w: 100%;
