@@ -17,6 +17,8 @@
 	--status-good: #4ade80;
 	--status-warning: #fbbf24;
 	--shadow: 0 12px 40px rgb(0 0 0 / 0.5);
+	--scrollbar: #2b4266;
+	--scrollbar-hover: #3d5a85;
 	--radius: 8px;
 	--gutter: clamp(16px, 4vw, 56px);
 	--nav-h: 68px;
@@ -65,6 +67,43 @@ img {
 :focus-visible {
 	outline: 2px solid var(--accent);
 	outline-offset: 2px;
+}
+
+/* Scrollbars: thin slate thumb on a transparent track. Rows/tabs that hide theirs keep
+   scrollbar-width: none, which still wins because it's set on the element itself. */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--scrollbar) transparent;
+}
+*:hover {
+	scrollbar-color: var(--scrollbar-hover) transparent;
+}
+html,
+html:hover {
+	scrollbar-color: var(--scrollbar) var(--bg);
+}
+/* Safari only understands the legacy pseudo-elements; guard them so Chromium, which supports
+   both, uses the standard properties above instead. */
+@supports not (scrollbar-color: auto) {
+	::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	::-webkit-scrollbar-thumb {
+		background: var(--scrollbar);
+		border: 2px solid transparent;
+		border-radius: 999px;
+		background-clip: padding-box;
+	}
+	::-webkit-scrollbar-thumb:hover {
+		background-color: var(--scrollbar-hover);
+	}
+	::-webkit-scrollbar-corner {
+		background: transparent;
+	}
 }
 
 ::selection {

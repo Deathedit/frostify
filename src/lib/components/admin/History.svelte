@@ -14,6 +14,7 @@
 	} from '#lib/plex/admin.js';
 	import { img } from '#lib/plex/images.js';
 	import { session } from '#lib/stores/session.svelte.js';
+	import Select from '../Select.svelte';
 	import Spinner from '../Spinner.svelte';
 
 	const PAGE = 50;
@@ -79,20 +80,25 @@
 </script>
 
 <div class="filters">
-	<label>
+	<div class="field">
 		<span class="muted small">User</span>
-		<select bind:value={accountId}>
-			<option value="">Everyone</option>
-			{#each accounts as a (a.id)}<option value={String(a.id)}>{accountName(a.id)}</option>{/each}
-		</select>
-	</label>
-	<label>
+		<Select
+			bind:value={accountId}
+			label="User"
+			options={[
+				{ value: '', label: 'Everyone' },
+				...accounts.map((a) => ({ value: String(a.id), label: accountName(a.id) }))
+			]}
+		/>
+	</div>
+	<div class="field">
 		<span class="muted small">Library</span>
-		<select bind:value={sectionId}>
-			<option value="">All libraries</option>
-			{#each sections as s (s.key)}<option value={s.key}>{s.title}</option>{/each}
-		</select>
-	</label>
+		<Select
+			bind:value={sectionId}
+			label="Library"
+			options={[{ value: '', label: 'All libraries' }, ...sections.map((s) => ({ value: s.key, label: s.title }))]}
+		/>
+	</div>
 	<span class="muted small count">{total ? `${total.toLocaleString()} plays` : ''}</span>
 </div>
 
@@ -149,7 +155,7 @@
 		gap: 1rem;
 		margin-bottom: 1.25rem;
 	}
-	label {
+	.field {
 		display: grid;
 		gap: 0.3rem;
 	}

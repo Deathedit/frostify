@@ -24,8 +24,8 @@
 	let loaded = $state(false);
 </script>
 
-<a {href} class="card" class:landscape title={displayTitle(item)}>
-	<div class="frame" class:loaded>
+<a {href} class="card" class:landscape>
+	<div class="frame" class:loaded class:has-progress={pct > 0}>
 		{#if src}
 			<img {src} alt="" loading="lazy" decoding="async" onload={() => (loaded = true)} />
 		{/if}
@@ -149,6 +149,29 @@
 	.card:hover .hover,
 	.card:focus-visible .hover {
 		opacity: 1;
+	}
+	/* keep hover content clear of the progress bar along the bottom edge */
+	.has-progress .hover {
+		padding-bottom: calc(0.75rem + 12px);
+	}
+	/* wide cards only show a play button: centre it, Netflix-style */
+	.landscape .hover {
+		justify-content: center;
+		align-items: center;
+		background: linear-gradient(to top, rgb(7 13 26 / 0.7), rgb(7 13 26 / 0.25));
+	}
+	.landscape .play {
+		align-self: center;
+		width: 3rem;
+		height: 3rem;
+		font-size: 1.3rem;
+		padding-left: 3px;
+		transform: scale(0.85);
+		transition: transform 0.2s;
+	}
+	.landscape:hover .play,
+	.landscape:focus-visible .play {
+		transform: scale(1);
 	}
 	.play {
 		align-self: flex-start;

@@ -4,6 +4,7 @@
 	import EpisodeList from '#lib/components/EpisodeList.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import PlayButton from '#lib/components/PlayButton.svelte';
+	import Select from '#lib/components/Select.svelte';
 	import Spinner from '#lib/components/Spinner.svelte';
 	import { duration, episodeCode, progress } from '#lib/format.js';
 	import { img } from '#lib/plex/images.js';
@@ -147,9 +148,12 @@
 				<div class="season-head">
 					<h2>Episodes</h2>
 					{#if seasons.length > 1}
-						<select bind:value={seasonKey} aria-label="Season">
-							{#each seasons as s (s.ratingKey)}<option value={s.ratingKey}>{s.title}</option>{/each}
-						</select>
+						<Select
+							bind:value={seasonKey}
+							label="Season"
+							class="season-select"
+							options={seasons.map((s) => ({ value: s.ratingKey, label: s.title }))}
+						/>
 					{:else}
 						<span class="muted">{seasons[0].title}</span>
 					{/if}
@@ -341,8 +345,7 @@
 	.season-head h2 {
 		margin: 0;
 	}
-	.season-head select {
-		min-width: 0;
+	.season-head :global(.season-select) {
 		max-width: 60%;
 	}
 	.cast {

@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import PosterCard from '#lib/components/PosterCard.svelte';
+	import Select from '#lib/components/Select.svelte';
 	import Spinner from '#lib/components/Spinner.svelte';
 	import { SORTS, getSectionItems } from '#lib/plex/library.js';
 	import type { Metadata } from '#lib/plex/types.js';
@@ -78,12 +79,7 @@
 				<input type="checkbox" bind:checked={unwatched} />
 				<span>Unwatched</span>
 			</label>
-			<label>
-				<span class="sr-only">Sort by</span>
-				<select bind:value={sort}>
-					{#each SORTS as s (s.value)}<option value={s.value}>{s.label}</option>{/each}
-				</select>
-			</label>
+			<Select bind:value={sort} label="Sort by" options={SORTS.map((s) => ({ ...s }))} />
 		</div>
 	</header>
 
