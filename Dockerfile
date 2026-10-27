@@ -1,7 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # ---- build: compile the static SPA ----
-FROM node:22-alpine AS build
+# Runs on the build machine's own architecture: the output is plain HTML/JS/CSS, so it's the
+# same for every target, and Node/Vite's native binaries crash under QEMU arm64 emulation.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
 RUN npm ci
