@@ -3,6 +3,7 @@
 	import favicon from '#lib/assets/favicon.svg';
 	import { page } from '$app/state';
 	import Nav from '#lib/components/Nav.svelte';
+	import SearchOverlay from '#lib/components/SearchOverlay.svelte';
 	import TabBar from '#lib/components/TabBar.svelte';
 	import { libraries } from '#lib/stores/library.svelte.js';
 	import { session } from '#lib/stores/session.svelte.js';
@@ -27,6 +28,7 @@
 {#if !chromeless && session.server}
 	<Nav />
 	<TabBar />
+	<SearchOverlay />
 {/if}
 
 <main class:with-tabbar={!chromeless}>

@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { openSearch } from '#lib/search.js';
 	import { libraries } from '#lib/stores/library.svelte.js';
 	import Icon from './Icon.svelte';
 
 	const isActive = (href: string) =>
-		href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href);
+		!page.state.search &&
+		(href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href));
 </script>
 
 <!-- Phone-only bottom navigation; hidden above 640px where the top nav has room for links. -->
@@ -15,7 +17,7 @@
 			<Icon name={s.type === 'show' ? 'tv' : 'film'} /><span>{s.title}</span>
 		</a>
 	{/each}
-	<a href="/search" class:active={isActive('/search')}><Icon name="search" /><span>Search</span></a>
+	<button class:active={!!page.state.search} onclick={openSearch}><Icon name="search" /><span>Search</span></button>
 </nav>
 
 <style>
@@ -34,8 +36,12 @@
 			backdrop-filter: blur(12px);
 			box-shadow: 0 -1px 0 var(--border);
 		}
-		a {
+		a,
+		button {
 			flex: 1;
+			border: 0;
+			background: none;
+			padding: 0;
 			min-width: 0;
 			display: flex;
 			flex-direction: column;
@@ -45,20 +51,20 @@
 			font-size: 0.68rem;
 			color: var(--text-dim);
 		}
-		a :global(.icon) {
+		:is(a, button) :global(.icon) {
 			font-size: 1.35rem;
 		}
-		a span {
+		:is(a, button) span {
 			max-width: 100%;
 			padding: 0 4px;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			white-space: nowrap;
 		}
-		a.active {
+		.active {
 			color: var(--accent);
 		}
-		a.active :global(.icon) {
+		.active :global(.icon) {
 			filter: drop-shadow(0 0 6px rgb(125 211 252 / 0.6));
 		}
 	}

@@ -53,6 +53,14 @@ export interface Stream {
 	/** 1 = video, 2 = audio, 3 = subtitle */
 	streamType: 1 | 2 | 3;
 	codec?: string;
+	/** Set on transcode decision responses: copy | transcode | burn | ignore */
+	decision?: string;
+	bitrate?: number;
+	channels?: number;
+	width?: number;
+	height?: number;
+	frameRate?: number;
+	profile?: string;
 	displayTitle?: string;
 	extendedDisplayTitle?: string;
 	language?: string;
@@ -65,6 +73,8 @@ export interface Part {
 	key: string;
 	duration?: number;
 	container?: string;
+	size?: number;
+	decision?: string;
 	Stream?: Stream[];
 }
 
@@ -74,6 +84,10 @@ export interface Media {
 	videoCodec?: string;
 	audioCodec?: string;
 	videoResolution?: string;
+	videoProfile?: string;
+	videoFrameRate?: string;
+	audioChannels?: number;
+	protocol?: string;
 	bitrate?: number;
 	width?: number;
 	height?: number;

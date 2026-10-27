@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { openSearch } from '#lib/search.js';
 	import { libraries } from '#lib/stores/library.svelte.js';
 	import { session } from '#lib/stores/session.svelte.js';
 	import Icon from './Icon.svelte';
@@ -40,9 +41,9 @@
 	</nav>
 
 	<div class="right">
-		<a href="/search" class="icon-link" aria-label="Search" class:active={isActive('/search')}>
+		<button class="icon-link" aria-label="Search" class:active={!!page.state.search} onclick={openSearch}>
 			<Icon name="search" />
-		</a>
+		</button>
 		<div class="account">
 			<button
 				class="avatar-btn"
@@ -123,6 +124,9 @@
 		gap: 1rem;
 	}
 	.icon-link {
+		border: 0;
+		background: none;
+		padding: 0;
 		display: grid;
 		place-items: center;
 		width: 2.25rem;

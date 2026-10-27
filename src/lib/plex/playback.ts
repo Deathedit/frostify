@@ -73,11 +73,73 @@ function transcodeQuery(item: Metadata, quality: Quality, sessionId: string) {
 	};
 }
 
-/** Ask the server to prepare an HLS stream; returns the master playlist URL. */
-export async function startTranscode(item: Metadata, quality: Quality, sessionId: string): Promise<string> {
+/** What the server decided to do with each stream, from the universal decision endpoint. */
+export interface TranscodeDecision {
+	general?: string;
+	transcode?: string;
+	container?: string;
+	video?: Stream;
+	audio?: Stream;
+	subtitle?: Stream;
+}
+
+interface DecisionContainer {
+	generalDecisionText?: string;
+	transcodeDecisionText?: string;
+	Metadata?: Metadata[];
+}
+
+/** Ask the server to prepare an HLS stream; returns the master playlist URL and its decision. */
+export async function startTranscode(
+	item: Metadata,
+	quality: Quality,
+	sessionId: string
+): Promise<{ url: string; decision: TranscodeDecision }> {
 	const query = transcodeQuery(item, quality, sessionId);
-	await pms('/video/:/transcode/universal/decision', { query });
-	return pmsUrl('/video/:/transcode/universal/start.m3u8', query);
+	const mc = await pms<DecisionContainer>('/video/:/transcode/universal/decision', { query });
+	const media = mc.Metadata?.[0]?.Media?.[0];
+	const out = media?.Part?.[0]?.Stream ?? [];
+	// The decision lists only the streams that will be sent; pick the active one of each type.
+	const pick = (t: Stream['streamType']) =>
+		out.find((s) => s.streamType === t && s.selected !== false && s.decision) ??
+		out.find((s) => s.streamType === t);
+	return {
+		url: pmsUrl('/video/:/transcode/universal/start.m3u8', query),
+		decision: {
+			general: mc.generalDecisionText,
+			transcode: mc.transcodeDecisionText,
+			container: media?.container,
+			video: pick(1),
+			audio: pick(2),
+			subtitle: pick(3)
+		}
+	};
+}
+
+/** Live transcoder state (speed, hardware use). Only the server owner can read this. */
+export interface TranscodeSession {
+	key: string;
+	speed?: number;
+	throttled?: boolean;
+	progress?: number;
+	videoDecision?: string;
+	audioDecision?: string;
+	subtitleDecision?: string;
+	transcodeHwRequested?: boolean;
+	transcodeHwDecoding?: string;
+	transcodeHwEncoding?: string;
+	transcodeHwFullPipeline?: boolean;
+	sourceVideoCodec?: string;
+	videoCodec?: string;
+	audioCodec?: string;
+	width?: number;
+	height?: number;
+	maxOffsetAvailable?: number;
+}
+
+export async function getTranscodeSession(sessionId: string): Promise<TranscodeSession | null> {
+	const mc = await pms<{ TranscodeSession?: TranscodeSession[] }>('/transcode/sessions');
+	return mc.TranscodeSession?.find((s) => s.key.includes(sessionId)) ?? null;
 }
 
 export function stopTranscode(sessionId: string) {

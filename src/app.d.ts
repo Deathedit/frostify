@@ -5,7 +5,10 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState {
+			/** Search overlay is open (shallow history entry, so Back closes it). */
+			search?: boolean;
+		}
 		// interface Platform {}
 	}
 }

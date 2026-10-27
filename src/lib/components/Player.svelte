@@ -7,6 +7,7 @@
 	import {
 		QUALITIES,
 		type Quality,
+		type TranscodeDecision,
 		canDirectPlay,
 		directPlayUrl,
 		reportTimeline,
@@ -18,6 +19,7 @@
 	import type { Metadata } from '#lib/plex/types.js';
 	import { session } from '#lib/stores/session.svelte.js';
 	import Icon from './Icon.svelte';
+	import PlayerStats from './PlayerStats.svelte';
 	import Spinner from './Spinner.svelte';
 
 	let { ratingKey, onexit }: { ratingKey: string; onexit: () => void } = $props();
@@ -25,7 +27,7 @@
 	let container: HTMLDivElement;
 	let video: HTMLVideoElement;
 	let hls: Hls | null = null;
-	let sessionId = crypto.randomUUID();
+	let sessionId = $state(crypto.randomUUID());
 	let destroyed = false;
 	let forceTranscode = false;
 	let networkRetries = 0;
@@ -49,6 +51,8 @@
 
 	let controlsVisible = $state(true);
 	let settingsOpen = $state(false);
+	let statsOpen = $state(false);
+	let decision = $state<TranscodeDecision | null>(null);
 	let fullscreen = $state(false);
 	let hideTimer: ReturnType<typeof setTimeout> | undefined;
 	let lastPointer = 'mouse';
@@ -155,13 +159,16 @@
 		try {
 			if (!forceTranscode && canDirectPlay(m, quality, video)) {
 				mode = 'direct';
+				decision = null;
 				video.src = directPlayUrl(m);
 				seekOnLoad(at);
 			} else {
 				mode = 'hls';
 				sessionId = crypto.randomUUID();
-				const url = await startTranscode(m, quality, sessionId);
+				const res = await startTranscode(m, quality, sessionId);
 				if (destroyed) return;
+				const url = res.url;
+				decision = res.decision;
 				if (Hls.isSupported()) {
 					const token = session.server?.token ?? '';
 					hls = new Hls({
@@ -303,6 +310,9 @@
 				case 'f':
 					toggleFullscreen();
 					return true;
+				case 'i':
+					statsOpen = !statsOpen;
+					return true;
 				case 'm':
 					muted = !muted;
 					return true;
@@ -404,6 +414,19 @@
 				<button class="btn btn-ghost" onclick={onexit}>Go back</button>
 			</div>
 		</div>
+	{/if}
+
+	{#if statsOpen && meta}
+		<PlayerStats
+			{meta}
+			{mode}
+			{quality}
+			{decision}
+			{sessionId}
+			getVideo={() => video}
+			getHls={() => hls}
+			onclose={() => (statsOpen = false)}
+		/>
 	{/if}
 
 	{#if showNext && nextEp}
@@ -523,6 +546,18 @@
 									{/each}
 								</section>
 							{/if}
+							<section>
+								<h3>Advanced</h3>
+								<button
+									class:sel={statsOpen}
+									onclick={() => {
+										statsOpen = !statsOpen;
+										settingsOpen = false;
+									}}
+								>
+									<Icon name="check" />Playback stats <kbd>I</kbd>
+								</button>
+							</section>
 						</div>
 					{/if}
 				</div>
@@ -804,6 +839,15 @@
 	}
 	.settings button:hover {
 		background: var(--surface);
+	}
+	.settings kbd {
+		margin-left: auto;
+		font: inherit;
+		font-size: 0.7rem;
+		padding: 0 0.35rem;
+		border: 1px solid var(--border);
+		border-radius: 3px;
+		color: var(--text-dim);
 	}
 
 	.next-up {
