@@ -330,9 +330,11 @@
 		margin: 0;
 		border-radius: 10px;
 		overflow: hidden;
-		background: var(--bg-elev);
+		/* faint translucent edge so the card melts into the backdrop instead of being outlined */
+		background: rgb(14 26 46 / 0.55);
+		backdrop-filter: blur(8px);
 		box-shadow:
-			0 0 0 1px var(--border),
+			0 0 0 1px rgb(230 241 255 / 0.06),
 			var(--shadow);
 		flex: none;
 	}
