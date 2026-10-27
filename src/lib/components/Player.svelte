@@ -2,6 +2,7 @@
 	import Hls from 'hls.js';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import { clock, episodeCode } from '#lib/format.js';
 	import { getAllLeaves, getMetadata } from '#lib/plex/library.js';
 	import { isTextSubtitle, loadSubtitleVtt } from '#lib/plex/subtitles.js';
@@ -58,6 +59,11 @@
 	let subtitleUrl = $state<string | null>(null);
 	let trackEl = $state<HTMLTrackElement>();
 	let cuesLoaded = $state(0);
+	/** Manual subtitle delay in seconds (+ = later), adjusted with [ and ]. */
+	let subDelay = $state(0);
+	let osd = $state<string | null>(null);
+	let osdTimer: ReturnType<typeof setTimeout> | undefined;
+	const cueTimes = new WeakMap<TextTrackCue, [number, number]>();
 	let fullscreen = $state(false);
 	let hideTimer: ReturnType<typeof setTimeout> | undefined;
 	let lastPointer = 'mouse';
@@ -67,6 +73,20 @@
 	);
 	const shownTime = $derived(scrubbing ?? time);
 	const showUi = $derived(controlsVisible || paused || settingsOpen || !!error);
+
+	// hls.js already maps the video clock to the playlist (= film) time, so cues only need the manual delay.
+	$effect(() => {
+		void cuesLoaded;
+		const cues = trackEl?.track.cues;
+		if (!cues) return;
+		const shift = subDelay;
+		for (const cue of cues) {
+			let orig = cueTimes.get(cue);
+			if (!orig) cueTimes.set(cue, (orig = [cue.startTime, cue.endTime]));
+			cue.startTime = Math.max(0, orig[0] + shift);
+			cue.endTime = Math.max(0, orig[1] + shift);
+		}
+	});
 
 	// Lift subtitles above the control bar while it's showing, drop them back when it hides.
 	$effect(() => {
@@ -242,6 +262,17 @@
 		if (meta) reportTimeline(meta, state, time * 1000, sessionId);
 	}
 
+	function flash(message: string) {
+		osd = message;
+		clearTimeout(osdTimer);
+		osdTimer = setTimeout(() => (osd = null), 1500);
+	}
+
+	function nudgeSubtitles(delta: number) {
+		subDelay = Math.round((subDelay + delta) * 10) / 10;
+		flash(`Subtitle delay ${subDelay > 0 ? '+' : ''}${subDelay.toFixed(1)} s`);
+	}
+
 	function updateBuffered() {
 		const b = video.buffered;
 		for (let i = 0; i < b.length; i++) {
@@ -338,6 +369,12 @@
 				case 'f':
 					toggleFullscreen();
 					return true;
+				case '[':
+					if (subtitleUrl) nudgeSubtitles(-0.1);
+					return !!subtitleUrl;
+				case ']':
+					if (subtitleUrl) nudgeSubtitles(0.1);
+					return !!subtitleUrl;
 				case 'i':
 					statsOpen = !statsOpen;
 					return true;
@@ -467,11 +504,16 @@
 			{quality}
 			{decision}
 			{subtitleMode}
+			{subDelay}
 			{sessionId}
 			getVideo={() => video}
 			getHls={() => hls}
 			onclose={() => (statsOpen = false)}
 		/>
+	{/if}
+
+	{#if osd}
+		<div class="osd" transition:fade={{ duration: 150 }}>{osd}</div>
 	{/if}
 
 	{#if showNext && nextEp}
@@ -603,6 +645,18 @@
 									<Icon name="check" />Playback stats <kbd>I</kbd>
 								</button>
 							</section>
+							{#if subtitleUrl}
+								<section>
+									<h3>Subtitle sync</h3>
+									<div class="sync">
+										<button aria-label="Subtitles earlier" onclick={() => nudgeSubtitles(-0.1)}>−</button>
+										<span>{subDelay > 0 ? '+' : ''}{subDelay.toFixed(1)} s</span>
+										<button aria-label="Subtitles later" onclick={() => nudgeSubtitles(0.1)}>+</button>
+										{#if subDelay}<button class="reset" onclick={() => nudgeSubtitles(-subDelay)}>Reset</button>{/if}
+									</div>
+									<p class="sync-hint">Keys <kbd>[</kbd> and <kbd>]</kbd></p>
+								</section>
+							{/if}
 						</div>
 					{/if}
 				</div>
@@ -892,6 +946,50 @@
 	}
 	.settings button:hover {
 		background: var(--surface);
+	}
+	.sync {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.2rem 0.6rem;
+	}
+	.settings .sync button {
+		width: 2rem;
+		height: 2rem;
+		padding: 0;
+		justify-content: center;
+		border: 1px solid var(--border);
+		font-size: 1.1rem;
+	}
+	.settings .sync button.reset {
+		width: auto;
+		padding: 0 0.6rem;
+		font-size: 0.8rem;
+		margin-left: auto;
+	}
+	.sync span {
+		min-width: 4rem;
+		text-align: center;
+		font-variant-numeric: tabular-nums;
+	}
+	.sync-hint {
+		margin: 0.3rem 0.6rem 0.2rem;
+		font-size: 0.75rem;
+		color: var(--text-dim);
+	}
+	.osd {
+		position: absolute;
+		top: 18%;
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 7;
+		padding: 0.5rem 1rem;
+		border-radius: 8px;
+		background: rgb(7 13 26 / 0.85);
+		border: 1px solid var(--border);
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		pointer-events: none;
 	}
 	.settings kbd {
 		margin-left: auto;

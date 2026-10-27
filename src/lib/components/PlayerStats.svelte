@@ -19,6 +19,7 @@
 		quality,
 		decision,
 		subtitleMode,
+		subDelay,
 		sessionId,
 		getVideo,
 		getHls,
@@ -29,6 +30,7 @@
 		quality: Quality;
 		decision: TranscodeDecision | null;
 		subtitleMode: 'off' | 'client' | 'burn';
+		subDelay: number;
 		sessionId: string;
 		getVideo: () => HTMLVideoElement;
 		getHls: () => Hls | null;
@@ -193,6 +195,10 @@
 				<span class="tag burn">burned in</span>
 			{/if}
 		</dd>
+		{#if subtitleMode === 'client'}
+			<dt>Sub sync</dt>
+			<dd class="mono">{subDelay >= 0 ? '+' : ''}{subDelay.toFixed(1)} s</dd>
+		{/if}
 
 		{#if mode === 'hls'}
 			<dt class="section">Server decision</dt>
