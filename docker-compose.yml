@@ -1,8 +1,8 @@
 services:
   frostify:
-    # Published by .github/workflows/ci.yml; replace OWNER with your GitHub user/org.
+    # Published by .github/workflows/ci.yml.
     # Or build locally instead: comment out `image` and uncomment `build`.
-    image: ghcr.io/OWNER/frostify:latest
+    image: ghcr.io/deathedit/frostify:latest
     # build: .
     container_name: frostify
     ports:

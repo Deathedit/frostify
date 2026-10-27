@@ -31,7 +31,7 @@ The image is a static build served by unprivileged nginx on port 8080.
 docker compose up -d          # http://localhost:8080
 ```
 
-`docker-compose.yml` pulls `ghcr.io/OWNER/frostify:latest` (set OWNER to your GitHub user), or
+`docker-compose.yml` pulls `ghcr.io/deathedit/frostify:latest`, or
 switch it to `build: .` to build locally. Plain Docker: `docker build -t frostify . && docker run -p 8080:8080 frostify`.
 
 Put it behind your usual reverse proxy for HTTPS. Note that an **https** page can only reach Plex
