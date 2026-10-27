@@ -64,6 +64,9 @@
 						<strong>{session.user?.title}</strong>
 						<span class="muted">{session.server?.name}</span>
 					</div>
+					{#if session.server?.owned}
+						<a role="menuitem" href="/admin" onclick={() => (menuOpen = false)}>Admin</a>
+					{/if}
 					<button role="menuitem" onclick={switchServer}>Switch server</button>
 					<button role="menuitem" onclick={signOut}>Sign out</button>
 				</div>
@@ -191,7 +194,8 @@
 		margin-bottom: 0.3rem;
 		font-size: 0.9rem;
 	}
-	.menu button {
+	.menu button,
+	.menu a {
 		background: none;
 		border: 0;
 		text-align: left;
@@ -199,7 +203,8 @@
 		border-radius: 6px;
 		font-size: 0.9rem;
 	}
-	.menu button:hover {
+	.menu button:hover,
+	.menu a:hover {
 		background: var(--surface);
 		color: var(--accent);
 	}

@@ -95,17 +95,21 @@ function requireServer() {
 	return session.server;
 }
 
-/** Call the selected Plex Media Server; returns the MediaContainer body. */
-export async function pms<T = MediaContainer>(
-	path: string,
-	opts: { method?: string; query?: Query; signal?: AbortSignal } = {}
-): Promise<T> {
+type PmsOptions = { method?: string; query?: Query; signal?: AbortSignal };
+
+/** Call the selected Plex Media Server and return the whole JSON body. */
+export function pmsRaw<T>(path: string, opts: PmsOptions = {}): Promise<T> {
 	const server = requireServer();
-	const body = await request<{ MediaContainer?: T }>(`${server.uri}${path}${toSearch(opts.query)}`, {
+	return request<T>(`${server.uri}${path}${toSearch(opts.query)}`, {
 		method: opts.method ?? 'GET',
 		token: server.token,
 		signal: opts.signal
 	});
+}
+
+/** Call the selected Plex Media Server; returns the MediaContainer body. */
+export async function pms<T = MediaContainer>(path: string, opts: PmsOptions = {}): Promise<T> {
+	const body = await pmsRaw<{ MediaContainer?: T }>(path, opts);
 	return (body.MediaContainer ?? {}) as T;
 }
 

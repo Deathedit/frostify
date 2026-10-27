@@ -11,6 +11,11 @@
 	--accent-ink: #04121f;
 	--danger: #fb7185;
 	--glow: 0 0 24px rgb(125 211 252 / 0.35);
+	/* Chart series (validated pair for the dark surface: CVD ΔE 26.8, normal ΔE 31.8) */
+	--series-1: #3987e5;
+	--series-2: #d95926;
+	--status-good: #4ade80;
+	--status-warning: #fbbf24;
 	--shadow: 0 12px 40px rgb(0 0 0 / 0.5);
 	--radius: 8px;
 	--gutter: clamp(16px, 4vw, 56px);
