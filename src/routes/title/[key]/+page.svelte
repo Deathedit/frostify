@@ -9,6 +9,7 @@
 	import { duration, episodeCode, progress } from '#lib/format.js';
 	import { img } from '#lib/plex/images.js';
 	import { getChildren, getMetadata, markWatched } from '#lib/plex/library.js';
+	import { selectStream, streams } from '#lib/plex/playback.js';
 	import type { Metadata } from '#lib/plex/types.js';
 
 	const key = $derived(page.params.key ?? '');
@@ -79,6 +80,36 @@
 		!!item && (item.type === 'show' ? item.leafCount === item.viewedLeafCount : !!item.viewCount)
 	);
 
+	// Media details + track pickers (movies and episodes). Choices are saved on the Plex part,
+	// so the player starts with the same audio/subtitle tracks.
+	const part = $derived(item?.Media?.[0]?.Part?.[0]);
+	const videoStream = $derived(item ? streams(item, 1)[0] : undefined);
+	const audioTracks = $derived(item ? streams(item, 2) : []);
+	const subtitleTracks = $derived(item ? streams(item, 3) : []);
+	const trackLabel = (s: { extendedDisplayTitle?: string; displayTitle?: string; id: number }) =>
+		s.extendedDisplayTitle ?? s.displayTitle ?? `Track ${s.id}`;
+	const videoLabel = $derived.by(() => {
+		const m = item?.Media?.[0];
+		if (!m) return '';
+		if (videoStream?.displayTitle) return videoStream.displayTitle;
+		const res = m.videoResolution ? (/^\d+$/.test(m.videoResolution) ? `${m.videoResolution}p` : m.videoResolution.toUpperCase()) : '';
+		return [res, m.videoCodec ? `(${m.videoCodec.toUpperCase()})` : ''].filter(Boolean).join(' ');
+	});
+	let savingTrack = $state(false);
+
+	async function pickTrack(kind: 'audio' | 'subtitle', id: string) {
+		if (!part || !item) return;
+		savingTrack = true;
+		try {
+			await selectStream(part.id, kind, Number(id));
+			item = await getMetadata(item.ratingKey);
+		} catch (e) {
+			alert(`Could not change ${kind} track: ${e instanceof Error ? e.message : 'unknown error'}`);
+		} finally {
+			savingTrack = false;
+		}
+	}
+
 	async function toggleWatched() {
 		if (!item) return;
 		await markWatched(item.ratingKey, !watched);
@@ -139,7 +170,44 @@
 
 				{#if item.summary}<p class="summary">{item.summary}</p>{/if}
 
-				<dl>
+				<dl class:saving={savingTrack}>
+					{#if part && (item.type === 'movie' || item.type === 'episode')}
+						{#if videoLabel}
+							<dt>Video</dt>
+							<dd>{videoLabel}</dd>
+						{/if}
+						{#if audioTracks.length}
+							<dt>Audio</dt>
+							<dd>
+								{#if audioTracks.length > 1}
+									<Select
+										variant="inline"
+										label="Audio track"
+										value={String((audioTracks.find((s) => s.selected) ?? audioTracks[0]).id)}
+										options={audioTracks.map((s) => ({ value: String(s.id), label: trackLabel(s) }))}
+										onchange={(v) => pickTrack('audio', v)}
+									/>
+								{:else}
+									{trackLabel(audioTracks[0])}
+								{/if}
+							</dd>
+						{/if}
+						{#if subtitleTracks.length}
+							<dt>Subtitles</dt>
+							<dd>
+								<Select
+									variant="inline"
+									label="Subtitles"
+									value={String(subtitleTracks.find((s) => s.selected)?.id ?? 0)}
+									options={[
+										{ value: '0', label: 'None' },
+										...subtitleTracks.map((s) => ({ value: String(s.id), label: trackLabel(s) }))
+									]}
+									onchange={(v) => pickTrack('subtitle', v)}
+								/>
+							</dd>
+						{/if}
+					{/if}
 					{#if item.Genre?.length}
 						<dt>Genres</dt>
 						<dd>{item.Genre.map((g) => g.tag).join(', ')}</dd>
@@ -211,12 +279,13 @@
 	.loading.small {
 		min-height: 160px;
 	}
+	/* no overflow:hidden: the backdrop already fits (inset 0), and clipping would cut off the
+	   audio/subtitle drop-downs in the details list */
 	.hero {
 		position: relative;
 		min-height: 78vh;
 		display: flex;
 		align-items: flex-end;
-		overflow: hidden;
 	}
 	.art {
 		position: absolute;
@@ -337,6 +406,11 @@
 	}
 	dd {
 		margin: 0;
+	}
+	dl.saving {
+		opacity: 0.6;
+		pointer-events: none;
+		transition: opacity 0.15s;
 	}
 
 	.body {

@@ -18,12 +18,18 @@
 		value = $bindable(),
 		options,
 		label,
+		variant = 'box',
+		onchange,
 		class: className = ''
 	}: {
 		value: string | null | undefined;
 		options: SelectOption[];
 		/** accessible name, since there's no visible <label> wired to a native control */
 		label: string;
+		/** 'inline' renders as accent-coloured text with a caret, for use inside detail lists */
+		variant?: 'box' | 'inline';
+		/** called after the user picks a different value */
+		onchange?: (value: string) => void;
 		class?: string;
 	} = $props();
 
@@ -55,9 +61,15 @@
 		open = false;
 	}
 
+	function set(v: string) {
+		if (v === value) return;
+		value = v;
+		onchange?.(v);
+	}
+
 	function choose(i: number) {
 		const o = options[i];
-		if (o) value = o.value;
+		if (o) set(o.value);
 		hide();
 		button.focus();
 	}
@@ -81,7 +93,7 @@
 			const i = (start + k) % options.length;
 			if (options[i].label.toLowerCase().startsWith(typed)) {
 				if (open) move(i);
-				else value = options[i].value;
+				else set(options[i].value);
 				return;
 			}
 		}
@@ -136,7 +148,7 @@
 	}}
 />
 
-<div class="select {className}" bind:this={root}>
+<div class="select {className}" class:inline={variant === 'inline'} bind:this={root}>
 	<button
 		bind:this={button}
 		type="button"
@@ -227,6 +239,39 @@
 	.trigger.open :global(.chevron) {
 		transform: rotate(180deg);
 		color: var(--accent);
+	}
+
+	/* inline variant: reads as a link inside a details list */
+	.inline .trigger {
+		width: auto;
+		min-width: 0;
+		padding: 0.1rem 0.3rem;
+		margin: -0.1rem -0.3rem;
+		gap: 0.3rem;
+		background: none;
+		border-color: transparent;
+		border-radius: 5px;
+		color: var(--accent);
+		font-size: inherit;
+		font-weight: 500;
+	}
+	.inline .trigger:hover {
+		background: rgb(125 211 252 / 0.08);
+		border-color: transparent;
+	}
+	.inline .trigger:focus-visible,
+	.inline .trigger.open {
+		border-color: var(--accent);
+		box-shadow: none;
+	}
+	.inline .trigger :global(.chevron) {
+		color: var(--accent);
+		width: 1em;
+		height: 1em;
+	}
+	.inline .list {
+		left: -0.3rem;
+		right: auto;
 	}
 
 	.list {
