@@ -868,6 +868,11 @@
 		box-shadow: 0 0 10px var(--accent);
 		border: 0;
 	}
+	/* No focus box or ring: the thumb's own glow is the focus cue (Chrome treats clicks as focus-visible). */
+	input[type='range']:focus,
+	input[type='range']:focus-visible {
+		outline: none;
+	}
 	input[type='range']::-moz-range-thumb {
 		width: 14px;
 		height: 14px;

@@ -211,8 +211,9 @@ input[type='text'] {
 	border-radius: 6px;
 	padding: 0.55rem 0.8rem;
 }
+/* text-like fields only: sliders/checkboxes would get a glowing box around their whole hit area */
 select:focus,
-input:focus {
+input:focus:not([type='range'], [type='checkbox'], [type='radio']) {
 	outline: none;
 	border-color: var(--accent);
 	box-shadow: var(--glow);
