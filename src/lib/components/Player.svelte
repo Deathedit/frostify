@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import { clock, episodeCode } from '#lib/format.js';
 	import { getAllLeaves, getMetadata } from '#lib/plex/library.js';
+	import { isTextSubtitle, loadSubtitleVtt } from '#lib/plex/subtitles.js';
 	import {
 		QUALITIES,
 		type Quality,
@@ -53,6 +54,10 @@
 	let settingsOpen = $state(false);
 	let statsOpen = $state(false);
 	let decision = $state<TranscodeDecision | null>(null);
+	let subtitleMode = $state<'off' | 'client' | 'burn'>('off');
+	let subtitleUrl = $state<string | null>(null);
+	let trackEl = $state<HTMLTrackElement>();
+	let cuesLoaded = $state(0);
 	let fullscreen = $state(false);
 	let hideTimer: ReturnType<typeof setTimeout> | undefined;
 	let lastPointer = 'mouse';
@@ -62,6 +67,15 @@
 	);
 	const shownTime = $derived(scrubbing ?? time);
 	const showUi = $derived(controlsVisible || paused || settingsOpen || !!error);
+
+	// Lift subtitles above the control bar while it's showing, drop them back when it hides.
+	$effect(() => {
+		void cuesLoaded;
+		const cues = trackEl?.track.cues;
+		if (!cues) return;
+		const line = showUi ? -5 : 'auto';
+		for (const cue of cues) (cue as VTTCue).line = line;
+	});
 	const showNext = $derived(!!nextEp && duration > 0 && duration - time < 30 && !error);
 	const audioStreams = $derived(meta ? streams(meta, 2) : []);
 	const subtitleStreams = $derived(meta ? streams(meta, 3) : []);
@@ -157,7 +171,21 @@
 		networkRetries = 0;
 		teardown();
 		try {
-			if (!forceTranscode && canDirectPlay(m, quality, video)) {
+			const sub = streams(m, 3).find((s) => s.selected);
+			subtitleUrl = null;
+			subtitleMode = sub ? 'burn' : 'off';
+			if (sub && isTextSubtitle(sub)) {
+				try {
+					subtitleUrl = await loadSubtitleVtt(sub);
+					subtitleMode = 'client';
+				} catch {
+					// couldn't fetch/convert it: let the server burn it in instead
+				}
+				if (destroyed) return;
+			}
+			const burn = subtitleMode === 'burn';
+
+			if (!forceTranscode && canDirectPlay(m, quality, video, burn)) {
 				mode = 'direct';
 				decision = null;
 				video.src = directPlayUrl(m);
@@ -165,7 +193,7 @@
 			} else {
 				mode = 'hls';
 				sessionId = crypto.randomUUID();
-				const res = await startTranscode(m, quality, sessionId);
+				const res = await startTranscode(m, quality, sessionId, burn);
 				if (destroyed) return;
 				const url = res.url;
 				decision = res.decision;
@@ -346,7 +374,7 @@
 	role="application"
 	aria-label="Video player"
 >
-	<!-- svelte-ignore a11y_media_has_caption (subtitles are burned in by the transcoder) -->
+	<!-- svelte-ignore a11y_media_has_caption (captions are added below only when a subtitle is selected) -->
 	<video
 		bind:this={video}
 		playsinline
@@ -379,7 +407,23 @@
 			volume = video.volume;
 			muted = video.muted;
 		}}
-	></video>
+	>
+		{#if subtitleUrl}
+			{@const sub = subtitleStreams.find((s) => s.selected)}
+			<track
+				bind:this={trackEl}
+				kind="subtitles"
+				src={subtitleUrl}
+				srclang={sub?.languageCode}
+				label={sub?.displayTitle ?? 'Subtitles'}
+				default
+				onload={(e) => {
+					(e.currentTarget as HTMLTrackElement).track.mode = 'showing';
+					cuesLoaded++;
+				}}
+			/>
+		{/if}
+	</video>
 
 	{#if (loading || buffering) && !error && resumeAt === null}
 		<div class="center"><Spinner size={64} /></div>
@@ -422,6 +466,7 @@
 			{mode}
 			{quality}
 			{decision}
+			{subtitleMode}
 			{sessionId}
 			getVideo={() => video}
 			getHls={() => hls}
@@ -586,6 +631,14 @@
 		height: 100%;
 		object-fit: contain;
 		background: #000;
+	}
+	video::cue {
+		font-family: Inter, system-ui, sans-serif;
+		font-size: clamp(1rem, 2.6vw, 2rem);
+		line-height: 1.3;
+		color: #fff;
+		background: rgb(3 7 15 / 0.55);
+		text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
 	}
 	.center {
 		position: absolute;

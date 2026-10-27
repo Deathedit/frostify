@@ -23,11 +23,15 @@ export function streams(item: Metadata, type: Stream['streamType']): Stream[] {
 	return item.Media?.[0]?.Part?.[0]?.Stream?.filter((s) => s.streamType === type) ?? [];
 }
 
-/** Can the browser play the file untouched? Only for common mp4/webm combos with no subtitles. */
-export function canDirectPlay(item: Metadata, quality: Quality, video: HTMLVideoElement): boolean {
+/** Can the browser play the file untouched? Only common mp4/webm combos, and never with burned-in subs. */
+export function canDirectPlay(
+	item: Metadata,
+	quality: Quality,
+	video: HTMLVideoElement,
+	burnSubtitles: boolean
+): boolean {
 	const media: Media | undefined = item.Media?.[0];
-	if (!media || quality.id !== 'original') return false;
-	if (streams(item, 3).some((s) => s.selected)) return false;
+	if (!media || quality.id !== 'original' || burnSubtitles) return false;
 	const container = media.container ?? '';
 	const v = media.videoCodec ?? '';
 	const a = media.audioCodec ?? '';
@@ -46,7 +50,7 @@ export function directPlayUrl(item: Metadata): string {
 	return pmsUrl(part.key);
 }
 
-function transcodeQuery(item: Metadata, quality: Quality, sessionId: string) {
+function transcodeQuery(item: Metadata, quality: Quality, sessionId: string, burnSubtitles: boolean) {
 	const server = session.server!;
 	return {
 		hasMDE: 1,
@@ -58,7 +62,8 @@ function transcodeQuery(item: Metadata, quality: Quality, sessionId: string) {
 		directPlay: 0,
 		directStream: quality.id === 'original' ? 1 : 0,
 		directStreamAudio: 1,
-		subtitles: 'burn',
+		// Text subs are rendered by the browser; only image subs need burning (forces a video transcode).
+		subtitles: burnSubtitles ? 'burn' : 'none',
 		subtitleSize: 100,
 		audioBoost: 100,
 		location: server.local ? 'lan' : 'wan',
@@ -93,9 +98,10 @@ interface DecisionContainer {
 export async function startTranscode(
 	item: Metadata,
 	quality: Quality,
-	sessionId: string
+	sessionId: string,
+	burnSubtitles: boolean
 ): Promise<{ url: string; decision: TranscodeDecision }> {
-	const query = transcodeQuery(item, quality, sessionId);
+	const query = transcodeQuery(item, quality, sessionId, burnSubtitles);
 	const mc = await pms<DecisionContainer>('/video/:/transcode/universal/decision', { query });
 	const media = mc.Metadata?.[0]?.Media?.[0];
 	const out = media?.Part?.[0]?.Stream ?? [];

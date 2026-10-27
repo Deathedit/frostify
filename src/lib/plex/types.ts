@@ -64,6 +64,9 @@ export interface Stream {
 	displayTitle?: string;
 	extendedDisplayTitle?: string;
 	language?: string;
+	languageCode?: string;
+	/** External subtitle files have their own download path. */
+	key?: string;
 	selected?: boolean;
 	default?: boolean;
 }

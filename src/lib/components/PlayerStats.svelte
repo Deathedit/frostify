@@ -18,6 +18,7 @@
 		mode,
 		quality,
 		decision,
+		subtitleMode,
 		sessionId,
 		getVideo,
 		getHls,
@@ -27,6 +28,7 @@
 		mode: 'direct' | 'hls';
 		quality: Quality;
 		decision: TranscodeDecision | null;
+		subtitleMode: 'off' | 'client' | 'burn';
 		sessionId: string;
 		getVideo: () => HTMLVideoElement;
 		getHls: () => Hls | null;
@@ -183,7 +185,14 @@
 		<dt>Bitrate</dt>
 		<dd>{mbps(media?.bitrate)}{#if srcVideo?.bitrate}&nbsp;(video {mbps(srcVideo.bitrate)}){/if}</dd>
 		<dt>Subtitles</dt>
-		<dd>{srcSub?.extendedDisplayTitle ?? srcSub?.displayTitle ?? 'Off'}</dd>
+		<dd>
+			{srcSub?.extendedDisplayTitle ?? srcSub?.displayTitle ?? 'Off'}
+			{#if subtitleMode === 'client'}
+				<span class="tag copy">browser</span>
+			{:else if subtitleMode === 'burn'}
+				<span class="tag burn">burned in</span>
+			{/if}
+		</dd>
 
 		{#if mode === 'hls'}
 			<dt class="section">Server decision</dt>
