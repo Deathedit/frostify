@@ -15,6 +15,9 @@
 	--radius: 8px;
 	--gutter: clamp(16px, 4vw, 56px);
 	--nav-h: 68px;
+	--tabbar-h: 0px;
+	/* How far home rows slide up over the hero; ~0 on phones, 5rem on wide screens. */
+	--hero-overlap: clamp(0px, 8vw - 2rem, 5rem);
 
 	color-scheme: dark;
 	font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -169,6 +172,20 @@ input:focus {
 	outline: none;
 	border-color: var(--accent);
 	box-shadow: var(--glow);
+}
+
+@media (max-width: 640px) {
+	:root {
+		--nav-h: 56px;
+		--tabbar-h: 58px;
+	}
+	.btn {
+		padding: 0.7rem 1.1rem;
+		font-size: 0.95rem;
+	}
+	.page {
+		padding-top: calc(var(--nav-h) + 16px);
+	}
 }
 
 .sr-only {

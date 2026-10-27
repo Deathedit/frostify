@@ -72,7 +72,8 @@
 	}
 	.content {
 		position: relative;
-		padding: 0 var(--gutter) clamp(2rem, 7vw, 5rem);
+		/* keep the buttons clear of the rows that overlap the hero's bottom edge */
+		padding: 0 var(--gutter) calc(var(--hero-overlap) + clamp(1.25rem, 3vw, 2.5rem));
 		max-width: min(640px, 100%);
 	}
 	h1 {
@@ -120,6 +121,25 @@
 		gap: 0.75rem;
 	}
 	@media (max-width: 640px) {
+		.hero {
+			height: 72vh;
+			min-height: 420px;
+		}
+		.shade {
+			background:
+				linear-gradient(to top, var(--bg) 4%, rgb(7 13 26 / 0.7) 35%, transparent 70%),
+				radial-gradient(ellipse at 50% 100%, rgb(56 189 248 / 0.18), transparent 60%);
+		}
+		.content {
+			text-align: center;
+		}
+		.meta,
+		.actions {
+			justify-content: center;
+		}
+		.actions :global(.btn) {
+			flex: 1;
+		}
 		.summary {
 			-webkit-line-clamp: 2;
 			line-clamp: 2;

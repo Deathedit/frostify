@@ -63,7 +63,7 @@
 		padding-bottom: 4rem;
 	}
 	.rows.overlap {
-		margin-top: -4rem;
+		margin-top: calc(-1 * var(--hero-overlap));
 	}
 	.hero-sk {
 		height: 70vh;

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { untrack } from 'svelte';
 	import PosterCard from '#lib/components/PosterCard.svelte';
 	import Spinner from '#lib/components/Spinner.svelte';
 	import { SORTS, getSectionItems } from '#lib/plex/library.js';
@@ -45,16 +46,19 @@
 	// Reload from scratch whenever the library, sort or filter changes.
 	$effect(() => {
 		void [id, sort, unwatched];
-		items = [];
-		total = 0;
-		loadMore(true);
+		// loadMore reads `loading`/`items`; untracked so finishing a fetch doesn't restart this effect.
+		untrack(() => {
+			items = [];
+			total = 0;
+			loadMore(true);
+		});
 	});
 
 	$effect(() => {
 		if (!sentinel) return;
 		const io = new IntersectionObserver(
 			(entries) => {
-				if (entries[0].isIntersecting && items.length < total) loadMore();
+				if (entries[0].isIntersecting && items.length < total) untrack(() => loadMore());
 			},
 			{ rootMargin: '800px' }
 		);
@@ -147,8 +151,11 @@
 	@media (max-width: 640px) {
 		.grid {
 			--card-w: 100%;
-			grid-template-columns: repeat(3, 1fr);
+			grid-template-columns: repeat(3, minmax(0, 1fr));
 			gap: 1rem 0.6rem;
+		}
+		header {
+			margin-bottom: 1rem;
 		}
 		.filters {
 			margin-left: 0;

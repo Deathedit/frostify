@@ -51,6 +51,7 @@
 	let settingsOpen = $state(false);
 	let fullscreen = $state(false);
 	let hideTimer: ReturnType<typeof setTimeout> | undefined;
+	let lastPointer = 'mouse';
 
 	const duration = $derived(
 		Number.isFinite(videoDuration) && videoDuration > 0 ? videoDuration : (meta?.duration ?? 0) / 1000
@@ -237,6 +238,15 @@
 		hideTimer = setTimeout(() => (controlsVisible = false), 3000);
 	}
 
+	// Mouse: click toggles playback. Touch: tap toggles the controls, like native mobile players.
+	function onVideoClick() {
+		if (lastPointer === 'mouse') togglePlay();
+		else if (controlsVisible && !paused) {
+			clearTimeout(hideTimer);
+			controlsVisible = false;
+		} else poke();
+	}
+
 	function playNext() {
 		if (nextEp) goto(`/watch/${nextEp.ratingKey}`, { replace: true });
 	}
@@ -316,7 +326,13 @@
 	class="player"
 	class:hide-cursor={!showUi}
 	bind:this={container}
-	onpointermove={poke}
+	onpointermove={(e) => {
+		if (e.pointerType === 'mouse') poke();
+	}}
+	onpointerdown={(e) => {
+		lastPointer = e.pointerType;
+		if (e.target !== video) poke();
+	}}
 	role="application"
 	aria-label="Video player"
 >
@@ -324,7 +340,7 @@
 	<video
 		bind:this={video}
 		playsinline
-		onclick={togglePlay}
+		onclick={onVideoClick}
 		ondblclick={toggleFullscreen}
 		ontimeupdate={() => {
 			time = video.currentTime;
@@ -600,7 +616,11 @@
 	}
 	.top,
 	.bottom {
-		padding: 1rem clamp(16px, 3vw, 40px);
+		padding: 1rem max(clamp(16px, 3vw, 40px), env(safe-area-inset-right))
+			max(1rem, env(safe-area-inset-bottom)) max(clamp(16px, 3vw, 40px), env(safe-area-inset-left));
+	}
+	.top {
+		padding-top: max(1rem, env(safe-area-inset-top));
 	}
 	.top {
 		display: flex;
@@ -739,8 +759,8 @@
 		position: absolute;
 		right: 0;
 		bottom: calc(100% + 10px);
-		width: 280px;
-		max-height: 60vh;
+		width: min(280px, calc(100vw - 32px));
+		max-height: min(60vh, 420px);
 		overflow-y: auto;
 		background: rgb(14 26 46 / 0.96);
 		border: 1px solid var(--border);
@@ -817,8 +837,35 @@
 
 	@media (max-width: 640px) {
 		.mode,
-		.volume input {
+		.volume {
 			display: none;
+		}
+		.title strong {
+			font-size: 1rem;
+		}
+		.title span {
+			font-size: 0.85rem;
+		}
+		.big-play {
+			width: 68px;
+			height: 68px;
+			font-size: 1.9rem;
+		}
+		.bottom {
+			padding-top: 2rem;
+		}
+		.seek {
+			gap: 0.5rem;
+		}
+		.buttons {
+			gap: 0.1rem;
+			margin-top: 0.25rem;
+		}
+		.dialog {
+			padding: 1.25rem;
+		}
+		.dialog-actions :global(.btn) {
+			flex: 1 1 100%;
 		}
 		.ctl {
 			width: 38px;
@@ -832,8 +879,20 @@
 		.next-up {
 			left: 16px;
 			right: 16px;
-			bottom: 120px;
+			bottom: calc(110px + env(safe-area-inset-bottom));
 			max-width: none;
+		}
+	}
+	/* Phones held sideways: very little height, so tighten the chrome. */
+	@media (max-height: 480px) {
+		.bottom {
+			padding-top: 1.25rem;
+		}
+		.next-up {
+			bottom: 96px;
+		}
+		.settings {
+			max-height: 70vh;
 		}
 	}
 </style>

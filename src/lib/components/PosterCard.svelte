@@ -200,7 +200,7 @@
 			width: var(--card-w, 120px);
 		}
 		.card.landscape {
-			width: var(--card-w-wide, 240px);
+			width: var(--card-w-wide, min(240px, 68vw));
 		}
 	}
 </style>

@@ -106,6 +106,15 @@
 	.nav.hidden {
 		pointer-events: none;
 	}
+	@media (max-width: 640px) {
+		.row {
+			margin-top: 0.75rem;
+		}
+		.scroller {
+			gap: 0.5rem;
+			padding-block: 0.8rem;
+		}
+	}
 	@media (hover: none) {
 		.nav {
 			display: none;

@@ -18,6 +18,9 @@
 		next: 'M5 4.5v15l11-7.5L5 4.5ZM17 4h2v16h-2z',
 		check: 'M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2Z',
 		close: 'M18.3 5.7 16.9 4.3 12 9.2 7.1 4.3 5.7 5.7 10.6 10.6l-4.9 4.9 1.4 1.4 4.9-4.9 4.9 4.9 1.4-1.4-4.9-4.9 4.9-4.9Z',
+		home: 'M12 3 2 12h3v8h6v-6h2v6h6v-8h3L12 3Z',
+		tv: 'M3 5h18v12H3V5Zm2 2v8h14V7H5Zm3 12h8v2H8v-2Z',
+		film: 'M3 4h18v16H3V4Zm5 2v12h8V6H8ZM4.5 6.5v2h2v-2h-2Zm0 4.5v2h2v-2h-2Zm0 4.5v2h2v-2h-2Zm13-9v2h2v-2h-2Zm0 4.5v2h2v-2h-2Zm0 4.5v2h2v-2h-2Z',
 		star: 'M12 17.3 18.2 21l-1.6-7 5.4-4.7-7.2-.6L12 2 9.2 8.7 2 9.3l5.4 4.7-1.6 7L12 17.3Z'
 	} as const;
 	export type IconName = keyof typeof paths;

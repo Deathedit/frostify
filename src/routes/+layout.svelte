@@ -3,6 +3,7 @@
 	import favicon from '#lib/assets/favicon.svg';
 	import { page } from '$app/state';
 	import Nav from '#lib/components/Nav.svelte';
+	import TabBar from '#lib/components/TabBar.svelte';
 	import { libraries } from '#lib/stores/library.svelte.js';
 	import { session } from '#lib/stores/session.svelte.js';
 	import type { LayoutProps } from './$types';
@@ -25,8 +26,15 @@
 
 {#if !chromeless && session.server}
 	<Nav />
+	<TabBar />
 {/if}
 
-<main>
+<main class:with-tabbar={!chromeless}>
 	{@render children()}
 </main>
+
+<style>
+	.with-tabbar {
+		padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+	}
+</style>

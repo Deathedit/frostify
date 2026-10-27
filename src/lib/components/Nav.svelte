@@ -210,6 +210,12 @@
 	@media (max-width: 640px) {
 		header {
 			gap: 1rem;
+			padding-top: env(safe-area-inset-top);
+			height: calc(var(--nav-h) + env(safe-area-inset-top));
+		}
+		nav,
+		.icon-link {
+			display: none;
 		}
 		.brand :global(.logo) {
 			font-size: 0 !important;

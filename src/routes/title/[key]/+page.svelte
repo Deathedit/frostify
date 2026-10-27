@@ -308,7 +308,7 @@
 	}
 	dl {
 		display: grid;
-		grid-template-columns: auto 1fr;
+		grid-template-columns: auto minmax(0, 1fr);
 		gap: 0.3rem 1rem;
 		margin: 0;
 		font-size: 0.9rem;
@@ -323,6 +323,8 @@
 	.body {
 		padding: 0 var(--gutter) 4rem;
 		display: grid;
+		/* minmax(0,…) so the episode list and side-scrolling cast row can't widen the page */
+		grid-template-columns: minmax(0, 1fr);
 		gap: 2.5rem;
 	}
 	h2 {
@@ -339,6 +341,10 @@
 	.season-head h2 {
 		margin: 0;
 	}
+	.season-head select {
+		min-width: 0;
+		max-width: 60%;
+	}
 	.cast {
 		list-style: none;
 		margin: 0;
@@ -353,6 +359,7 @@
 		width: 110px;
 		display: grid;
 		justify-items: center;
+		align-content: start;
 		text-align: center;
 		gap: 0.25rem;
 		font-size: 0.82rem;
@@ -380,6 +387,41 @@
 		}
 		.poster {
 			display: none;
+		}
+	}
+	@media (max-width: 640px) {
+		.hero {
+			min-height: 0;
+		}
+		.art {
+			height: 62vh;
+		}
+		.shade {
+			background: linear-gradient(to top, var(--bg) 0, var(--bg) calc(100% - 62vh), rgb(7 13 26 / 0.6) calc(100% - 40vh), transparent 100%);
+		}
+		.content {
+			padding-top: 38vh;
+			padding-bottom: 1.5rem;
+		}
+		.actions :global(.btn) {
+			flex: 1 1 auto;
+		}
+		.summary {
+			font-size: 0.95rem;
+		}
+		.resume {
+			max-width: none;
+		}
+		.body {
+			gap: 2rem;
+		}
+		.cast li {
+			width: 84px;
+		}
+		.cast img,
+		.face {
+			width: 72px;
+			height: 72px;
 		}
 	}
 </style>

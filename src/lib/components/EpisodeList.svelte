@@ -47,7 +47,7 @@
 	}
 	.ep {
 		display: grid;
-		grid-template-columns: 2.5rem 200px 1fr;
+		grid-template-columns: 2.5rem 200px minmax(0, 1fr);
 		align-items: center;
 		gap: 1.25rem;
 		padding: 1.1rem 1rem;
@@ -95,6 +95,12 @@
 		right: 6px;
 		bottom: 6px;
 	}
+	.info {
+		min-width: 0;
+	}
+	.head strong {
+		overflow-wrap: anywhere;
+	}
 	.head {
 		display: flex;
 		justify-content: space-between;
@@ -123,12 +129,23 @@
 	}
 	@media (max-width: 640px) {
 		.ep {
-			grid-template-columns: 120px 1fr;
+			grid-template-columns: 120px minmax(0, 1fr);
+			align-items: start;
 			gap: 0.8rem;
 			padding: 0.8rem 0;
 		}
 		.num {
 			display: none;
+		}
+		.head {
+			flex-direction: column;
+			gap: 0.15rem;
+		}
+		.head strong {
+			font-size: 0.92rem;
+		}
+		.head span {
+			font-size: 0.8rem;
 		}
 		p {
 			-webkit-line-clamp: 2;
