@@ -60,6 +60,21 @@
 		item ? img(item.type === 'episode' ? item.grandparentThumb : item.thumb, 300, 450) : undefined
 	);
 	const pct = $derived(item ? progress(item) : 0);
+	// Cast without a photo (or whose photo fails to load) get initials on a name-seeded tint.
+	let brokenFaces = $state<Record<string, boolean>>({});
+	const FACE_HUES = [192, 205, 218, 232, 246, 176];
+	function initials(name: string): string {
+		const words = name.split(/\s+/).filter(Boolean);
+		const first = words[0]?.[0] ?? '?';
+		const last = words.length > 1 ? words[words.length - 1][0] : '';
+		return (first + last).toUpperCase();
+	}
+	function faceHue(name: string): number {
+		let h = 0;
+		for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+		return FACE_HUES[h % FACE_HUES.length];
+	}
+
 	const watched = $derived(
 		!!item && (item.type === 'show' ? item.leafCount === item.viewedLeafCount : !!item.viewCount)
 	);
@@ -172,10 +187,10 @@
 				<ul class="cast">
 					{#each item.Role.slice(0, 20) as r (r.tag + r.role)}
 						<li>
-							{#if r.thumb}
-								<img src={r.thumb} alt="" loading="lazy" />
+							{#if r.thumb && !brokenFaces[r.tag]}
+								<img src={r.thumb} alt="" loading="lazy" onerror={() => (brokenFaces[r.tag] = true)} />
 							{:else}
-								<span class="face">{r.tag[0]}</span>
+								<span class="face" style:--h={faceHue(r.tag)} aria-hidden="true">{initials(r.tag)}</span>
 							{/if}
 							<strong>{r.tag}</strong>
 							{#if r.role}<span class="muted">{r.role}</span>{/if}
@@ -350,8 +365,9 @@
 	}
 	.cast {
 		list-style: none;
-		margin: 0;
-		padding: 0 0 0.5rem;
+		/* overflow-x:auto also clips vertically; pad so the 2px photo rings aren't cut off */
+		margin: 0 -4px;
+		padding: 4px 4px 0.5rem;
 		display: flex;
 		gap: 1.25rem;
 		overflow-x: auto;
@@ -380,8 +396,17 @@
 	.face {
 		display: grid;
 		place-items: center;
-		font-size: 2rem;
-		color: var(--accent);
+		font-size: 1.5rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		color: hsl(var(--h) 85% 80%);
+		background:
+			radial-gradient(circle at 30% 25%, hsl(var(--h) 55% 30% / 0.9), transparent 70%),
+			linear-gradient(145deg, hsl(var(--h) 45% 20%), hsl(var(--h) 50% 11%));
+		box-shadow:
+			0 0 0 2px hsl(var(--h) 40% 28%),
+			inset 0 1px 0 hsl(var(--h) 60% 45% / 0.35);
+		text-shadow: 0 1px 6px hsl(var(--h) 80% 30% / 0.6);
 	}
 	@media (max-width: 720px) {
 		.content {
@@ -425,6 +450,9 @@
 		.face {
 			width: 72px;
 			height: 72px;
+		}
+		.face {
+			font-size: 1.15rem;
 		}
 	}
 </style>
